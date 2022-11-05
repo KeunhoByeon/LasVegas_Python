@@ -8,6 +8,7 @@ class RuleBasePlayer(BasePlayer):
     Rule Base Player is not yet implemented.
     This will be selecting a casino randomly.
     """
+
     def __init__(self, index, random_ratio: float = 1.0):
         super(RuleBasePlayer, self).__init__(index)
         self.random_ratio = random_ratio
@@ -19,15 +20,15 @@ class RuleBasePlayer(BasePlayer):
                 break
         return select
 
-    def _select_casino_rule_based(self):
+    def _select_casino_rule_based(self, game_manager):
         # TODO: Not yet implemented!
         return self._select_casino_randomly()
 
-    def _select_casino(self):
+    def _select_casino(self, **kwargs):
         print("[Player{}]  Dice: {}{}".format(self.index, str(self._dice), str(self._dice_white)))
-        if random.random() < self.random_ratio:
-            select = self._select_casino_randomly()
+        if random.random() > self.random_ratio and "game_manager" in kwargs.keys():
+            select = self._select_casino_rule_based(game_manager=kwargs["game_manager"])
         else:
-            select = self._select_casino_rule_based()
+            select = self._select_casino_randomly()
         print("Select Casino: {}".format(select))
         return select

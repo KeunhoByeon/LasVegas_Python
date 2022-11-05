@@ -41,19 +41,19 @@ class BasePlayer(metaclass=ABCMeta):
             self._money += price
 
     @abstractmethod
-    def _select_casino(self):
+    def _select_casino(self, **kwargs):
         pass
 
-    def run_turn(self, game_manager=None):
+    def run_turn(self, **kwargs):
         output_dice = []
 
         if len(self._dice) == 0 and len(self._dice_white) == 0:
             return False, []
 
         self._roll_dice()
-        if game_manager is not None:
-            print(game_manager)
-        select = self._select_casino()
+        if "game_manager" in kwargs.keys():
+            print(kwargs["game_manager"])
+        select = self._select_casino(**kwargs)
 
         dice_to_remove = []
         for i, d in enumerate(self._dice):
