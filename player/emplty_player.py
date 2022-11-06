@@ -2,8 +2,8 @@ from .base_player import BasePlayer
 
 
 class EmptyPlayer(BasePlayer):
-    def __init__(self, index):
-        super(EmptyPlayer, self).__init__(index)
+    def __init__(self, **kwargs):
+        super(EmptyPlayer, self).__init__(kwargs)
         self._dice = []
         self._dice_white = []
         self._num_white_dice = 0

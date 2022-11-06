@@ -4,10 +4,11 @@ from banknotes_manager import BanknotesManager
 
 
 class Casino:
-    def __init__(self, index):
+    def __init__(self, index, print_game: bool = True):
         self.index = index
         self._banknotes_bucket = []
         self._dice_bucket = []
+        self._print_game = print_game
 
     def __str__(self):
         return "- Casino{}\tBanknotes: {:<21}\tDice: {}".format(self.index, str(self._banknotes_bucket), str(self._dice_bucket))
@@ -62,21 +63,20 @@ class Casino:
                 break
             winner = dice_order.pop(0)
             if winner > 0:
-                if winner not in players_win:
-                    players_win[winner] = []
-                print("CASINO{} BANKNOTE {}: WINNER IS PLAYER{}!".format(self.index, banknote, winner))
-                players_win[winner].append(banknote)
+                print("CASINO{} BANKNOTE {}: WINNER IS PLAYER{}!".format(self.index, banknote, winner)) if self._print_game else None
+                players_win[winner] = banknote
 
         return players_win
 
 
 class CasinosManager:
-    def __init__(self):
-        self._casinos = [Casino(i + 1) for i in range(6)]
+    def __init__(self, print_game: bool = True):
+        self._casinos = [Casino(i + 1, print_game=print_game) for i in range(6)]
+        self._print_game = print_game
 
     def __str__(self):
         return "[CASINOS]\n" + "\n".join((str(caino) for caino in self._casinos))
-    
+
     def reset_game(self):
         for casino in self._casinos:
             casino.reset_game()
@@ -101,6 +101,6 @@ class CasinosManager:
             for player_index, banknote in casino_result.items():
                 if player_index not in players_win.keys():
                     players_win[player_index] = []
-                players_win[player_index].extend(banknote)
+                players_win[player_index].append(banknote)
 
         return players_win

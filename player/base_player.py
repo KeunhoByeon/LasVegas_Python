@@ -3,12 +3,13 @@ from abc import *
 
 
 class BasePlayer(metaclass=ABCMeta):
-    def __init__(self, index, num_white_dice=2):
+    def __init__(self, index, num_white_dice=0, print_game: bool = True):
         self.index = index
         self._dice = []
         self._dice_white = []
         self._num_white_dice = num_white_dice
         self._money = 0
+        self._print_game = print_game
         self.reset_game()
 
     def __str__(self):
@@ -26,6 +27,16 @@ class BasePlayer(metaclass=ABCMeta):
     def set_num_white_dice(self, num_white_dice: int):
         self._num_white_dice = num_white_dice
 
+    def add_banknotes(self, banknotes: list):
+        if isinstance(banknotes, int):
+            self._money += banknotes
+        elif isinstance(banknotes, list):
+            for banknote in banknotes:
+                self._money += banknote
+
+    def get_money(self):
+        return self._money
+
     def _roll_dice(self):
         for i in range(len(self._dice)):
             self._dice[i] = random.randint(1, 6)
@@ -35,10 +46,6 @@ class BasePlayer(metaclass=ABCMeta):
         # Sort Dice
         self._dice.sort()
         self._dice_white.sort()
-
-    def add_banknotes(self, banknotes: list):
-        for price in banknotes:
-            self._money += price
 
     @abstractmethod
     def _select_casino(self, **kwargs):
@@ -51,7 +58,7 @@ class BasePlayer(metaclass=ABCMeta):
             return False, []
 
         self._roll_dice()
-        if "game_manager" in kwargs.keys():
+        if self._print_game and "game_manager" in kwargs.keys():
             print(kwargs["game_manager"])
         select = self._select_casino(**kwargs)
 

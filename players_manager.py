@@ -1,16 +1,16 @@
 from casinos_manager import CasinosManager
-from player import EmptyPlayer, HumanPlayer, RuleBasePlayer
+from player import EmptyPlayer, HumanPlayer, RuleBasePlayer, RandomPlayer
 
 
 class PlayersManager:
-    def __init__(self):
-        self._player_slots = [EmptyPlayer(i + 1) for i in range(5)]
+    def __init__(self, print_game: bool = True):
+        self._player_slots = [EmptyPlayer(index=i + 1) for i in range(5)]
+        self._print_game = print_game
 
     def __len__(self):
         return len(self._player_slots)
 
     def __str__(self):
-        # return "[PLAYERS]\n" + "\n".join((str(player) for player in self._player_slots))
         string = "[PLAYERS]"
         for player in self._player_slots:
             if isinstance(player, EmptyPlayer):
@@ -48,10 +48,13 @@ class PlayersManager:
     def add_player(self, slot_index: int, player_type: str = "Human"):
         if isinstance(self._player_slots[slot_index - 1], EmptyPlayer):
             if player_type == 'Human':
-                self._player_slots[slot_index - 1] = HumanPlayer(slot_index)
+                self._player_slots[slot_index - 1] = HumanPlayer(index=slot_index, print_game=self._print_game)
                 return True
             elif player_type == 'RuleBase':
-                self._player_slots[slot_index - 1] = RuleBasePlayer(slot_index)
+                self._player_slots[slot_index - 1] = RuleBasePlayer(index=slot_index, print_game=self._print_game)
+                return True
+            elif player_type == 'Random':
+                self._player_slots[slot_index - 1] = RandomPlayer(index=slot_index, print_game=self._print_game)
                 return True
             else:
                 print("Player type {} not yet implemented".format(player_type))
@@ -61,7 +64,25 @@ class PlayersManager:
             return False
 
     def del_player(self, slot_index: int):
-        self._player_slots[slot_index - 1] = EmptyPlayer(slot_index)
+        self._player_slots[slot_index - 1] = EmptyPlayer(index=slot_index)
+
+    def get_num_players(self):
+        cnt = 0
+        for player in self._player_slots:
+            if not isinstance(player, EmptyPlayer):
+                cnt += 1
+        return cnt
+
+    def get_ranking(self):
+        players_money = {}
+        for player_i, player in enumerate(self._player_slots):
+            if not isinstance(player, EmptyPlayer):
+                players_money[player_i + 1] = player.get_money()
+
+        ranking = []
+        for player_index, player_money in sorted(players_money.items(), key=lambda x: x[1], reverse=True):
+            ranking.append(player_index)
+        return ranking
 
     def add_banknotes(self, players_win: dict):
         for player_index, banknotes in players_win.items():
@@ -69,14 +90,14 @@ class PlayersManager:
                 continue
             self._player_slots[player_index - 1].add_banknotes(banknotes)
 
-    def run_turn(self, casino_manager: CasinosManager, game_manager=None):
+    def run_turn(self, casinos_manager: CasinosManager, game_manager=None):
         all_done = True
 
         for player in self._player_slots:
             casino_index, dice = player.run_turn(game_manager=game_manager)
             if not casino_index:
                 continue
-            casino_manager.add_dice(casino_index=casino_index, dice=dice)
+            casinos_manager.add_dice(casino_index=casino_index, dice=dice)
             all_done = False
 
         return all_done
