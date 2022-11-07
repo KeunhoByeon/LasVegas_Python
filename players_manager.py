@@ -104,11 +104,12 @@ class PlayersManager:
     def run_turn(self, casinos_manager: CasinosManager, game_info=None):
         all_done = True
 
-        for player in self._player_slots:
+        for player in self._get_exist_players():
             casino_index, dice = player.run_turn(game_info=game_info)
             if not casino_index:
                 continue
             casinos_manager.add_dice(casino_index=casino_index, dice=dice)
+            game_info['casinos'] = casinos_manager.get_casinos_info()
             all_done = False
 
         return all_done

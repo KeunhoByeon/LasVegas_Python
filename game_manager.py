@@ -10,7 +10,7 @@ class GameManager:
         self.banknotes_manager = BanknotesManager()
         self._print_game = print_game
         self.state = "READY"
-        self.round = 0
+        self.round_index = 0
 
     def __str__(self):
         return '\n\n\n\n' \
@@ -30,7 +30,7 @@ class GameManager:
         self.players_manager.reset_round()
 
     def get_game_info(self):
-        return {'round': self.round, 'casinos': self.casinos_manager.get_casinos_info(), 'players': self.players_manager.get_players_info(), 'text': str(self)}
+        return {'round_index': self.round_index, 'casinos': self.casinos_manager.get_casinos_info(), 'players': self.players_manager.get_players_info(), 'text': str(self)}
 
     def add_player(self, slot_index, player_type: str = "Human"):
         self.players_manager.add_player(slot_index, player_type)
@@ -39,7 +39,7 @@ class GameManager:
         self.players_manager.del_player(slot_index)
 
     def _run_round(self, round_index):
-        self.round = round_index
+        self.round_index = round_index
         self.casinos_manager.set_banknotes(self.banknotes_manager)
 
         self.state = "ROUND {}".format(round_index)
@@ -67,7 +67,7 @@ class GameManager:
 
         for round_index in range(1, rounds_num + 1):
             self._run_round(round_index)
-        self.round = 0
+        self.round_index = 0
 
         self.state = "GAME DONE"
         print(self) if self._print_game else None
