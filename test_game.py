@@ -9,24 +9,24 @@ from tqdm import tqdm
 from game_manager import GameManager
 
 GAME_NUM = 10000
-NUM_PROCESS = mp.cpu_count()
 RANDOM_SEED = 103
-PLAYER_SETTING = ["RuleBase", "RuleBase", "Random", "Random", "Random"]
+NUM_PROCESS = mp.cpu_count()
+PLAYER_SETTING = ["RuleBase", "Random", "Random"]
 
 """
 PLAYER_SETTING = ["RuleBase", "Random", "Random"]
-Player1 [7526, 1799, 675]
-Player2 [1263, 4252, 4485]
-Player3 [1211, 3949, 4840]
-[3149, 13222, 13629]
+Player1 [7469, 1900, 631]
+Player2 [1290, 4169, 4541]
+Player3 [1241, 3931, 4828]
+[3162, 13251, 13587]
 
 PLAYER_SETTING = ["RuleBase", "RuleBase", "Random", "Random", "Random"]
-Player1 [3573, 2426, 1744, 1374, 883]
-Player2 [3294, 2585, 1912, 1299, 910]
-Player3 [1090, 1650, 2145, 2463, 2652]
-Player4 [989, 1711, 2168, 2439, 2693]
-Player5 [1054, 1628, 2031, 2425, 2862]
-[13568, 13946, 23937, 24136, 24413]
+Player1 [3805, 2391, 1796, 1203, 805]
+Player2 [3234, 2711, 1912, 1273, 870]
+Player3 [969, 1709, 2112, 2608, 2602]
+Player4 [976, 1627, 2123, 2473, 2801]
+Player5 [1016, 1562, 2057, 2443, 2922]
+[12812, 13834, 24165, 24496, 24693]
 """
 
 if __name__ == '__main__':

@@ -38,7 +38,7 @@ class RuleBasePlayer(BasePlayer):
 
         return players_win
 
-    def _select_casino_rule_based(self, game_manager, white_dice_value=0.5):
+    def _select_casino_rule_based(self, game_info, white_dice_value=0.5):
         available_options = []
         for d in self._dice:
             if d not in available_options:
@@ -50,9 +50,9 @@ class RuleBasePlayer(BasePlayer):
 
         expected_profits = {}
         for dice_index in available_options:
-            num_players = game_manager.players_manager.get_num_players()
-            temp_dice_bucket = game_manager.casinos_manager._casinos[dice_index - 1]._dice_bucket.copy()
-            temp_banknotes_bucket = game_manager.casinos_manager._casinos[dice_index - 1]._banknotes_bucket.copy()
+            num_players = len(game_info['players'])
+            temp_dice_bucket = game_info['casinos'][dice_index]['dice']
+            temp_banknotes_bucket = game_info['casinos'][dice_index]['banknotes']
             original_payout = self._calculate_temp_pay_out(temp_dice_bucket, temp_banknotes_bucket)
 
             dice_value = 0
@@ -85,6 +85,6 @@ class RuleBasePlayer(BasePlayer):
 
     def _select_casino(self, **kwargs):
         print("[Player{}]  Dice: {}{}".format(self.index, str(self._dice), str(self._dice_white))) if self._print_game else None
-        select = self._select_casino_rule_based(game_manager=kwargs["game_manager"])
+        select = self._select_casino_rule_based(game_info=kwargs["game_info"])
         print("Select Casino: {}".format(select)) if self._print_game else None
         return select

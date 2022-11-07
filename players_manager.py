@@ -8,7 +8,10 @@ class PlayersManager:
         self._print_game = print_game
 
     def __len__(self):
-        return len(self._player_slots)
+        cnt = 0
+        for _ in self._get_exist_players():
+            cnt += 1
+        return cnt
 
     def __str__(self):
         string = "[PLAYERS]"
@@ -66,12 +69,20 @@ class PlayersManager:
     def del_player(self, slot_index: int):
         self._player_slots[slot_index - 1] = EmptyPlayer(index=slot_index)
 
-    def get_num_players(self):
-        cnt = 0
+    def _get_exist_players(self):
         for player in self._player_slots:
             if not isinstance(player, EmptyPlayer):
-                cnt += 1
-        return cnt
+                yield player
+
+    def get_num_players(self):
+        return len(self)
+
+    def get_players_info(self):
+        players_info = {}
+        for player in self._get_exist_players():
+            num_dice, num_dice_white = player.get_num_dice()
+            players_info[player.index] = {'num_dice': num_dice, 'num_dice_white': num_dice_white, 'money': player.get_money()}
+        return players_info
 
     def get_ranking(self):
         players_money = {}
@@ -90,11 +101,11 @@ class PlayersManager:
                 continue
             self._player_slots[player_index - 1].add_banknotes(banknotes)
 
-    def run_turn(self, casinos_manager: CasinosManager, game_manager=None):
+    def run_turn(self, casinos_manager: CasinosManager, game_info=None):
         all_done = True
 
         for player in self._player_slots:
-            casino_index, dice = player.run_turn(game_manager=game_manager)
+            casino_index, dice = player.run_turn(game_info=game_info)
             if not casino_index:
                 continue
             casinos_manager.add_dice(casino_index=casino_index, dice=dice)

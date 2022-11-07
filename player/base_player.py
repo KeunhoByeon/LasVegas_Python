@@ -37,6 +37,9 @@ class BasePlayer(metaclass=ABCMeta):
     def get_money(self):
         return self._money
 
+    def get_num_dice(self):
+        return len(self._dice), len(self._dice_white)
+
     def _roll_dice(self):
         for i in range(len(self._dice)):
             self._dice[i] = random.randint(1, 6)
@@ -58,8 +61,8 @@ class BasePlayer(metaclass=ABCMeta):
             return False, []
 
         self._roll_dice()
-        if self._print_game and "game_manager" in kwargs.keys():
-            print(kwargs["game_manager"])
+        if self._print_game and "game_info" in kwargs.keys():
+            print(kwargs["game_info"]['text'])
         select = self._select_casino(**kwargs)
 
         dice_to_remove = []

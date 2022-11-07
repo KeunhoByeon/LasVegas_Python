@@ -21,12 +21,15 @@ class Casino:
         self._banknotes_bucket = []
         self._dice_bucket = []
 
+    def get_current_banknotes_list(self):
+        return self._banknotes_bucket.copy()
+
+    def get_current_dice_list(self):
+        return self._dice_bucket.copy()
+
     def add_banknote(self, price: int):
         self._banknotes_bucket.append(price)
         self._banknotes_bucket.sort(reverse=True)
-
-    def is_over_banknote(self) -> bool:
-        return False if np.sum(self._banknotes_bucket) < 50000 else True
 
     def add_die(self, die_index: int):
         self._dice_bucket.append(die_index)
@@ -35,6 +38,9 @@ class Casino:
     def add_dice(self, dice: list):
         self._dice_bucket.extend(dice)
         self._dice_bucket.sort()
+
+    def is_over_banknote(self) -> bool:
+        return False if np.sum(self._banknotes_bucket) < 50000 else True
 
     def get_dice_order(self) -> list:
         temp_dice_unique, temp_dice_counts = np.unique(self._dice_bucket, return_counts=True)
@@ -84,6 +90,12 @@ class CasinosManager:
     def reset_round(self):
         for casino in self._casinos:
             casino.reset_round()
+
+    def get_casinos_info(self):
+        casinos_info = {}
+        for casino in self._casinos:
+            casinos_info[casino.index] = {'banknotes': casino.get_current_banknotes_list(), 'dice': casino.get_current_dice_list()}
+        return casinos_info
 
     def set_banknotes(self, banknotes_manager: BanknotesManager):
         for casino in self._casinos:
