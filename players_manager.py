@@ -1,5 +1,5 @@
 from casinos_manager import CasinosManager
-from player import EmptyPlayer, HumanPlayer, RuleBasePlayer, RandomPlayer
+from player import EmptyPlayer, HumanPlayer, MLPlayer, RuleBasePlayer, RandomPlayer
 
 
 class PlayersManager:
@@ -52,6 +52,12 @@ class PlayersManager:
         if isinstance(self._player_slots[slot_index - 1], EmptyPlayer):
             if player_type == 'Human':
                 self._player_slots[slot_index - 1] = HumanPlayer(index=slot_index, print_game=self._print_game)
+                return True
+            elif player_type == 'MLPlayer':
+                self._player_slots[slot_index - 1] = MLPlayer(index=slot_index, print_game=self._print_game)
+                return True
+            elif player_type == 'MLPlayerTraining':
+                self._player_slots[slot_index - 1] = MLPlayer(index=slot_index, print_game=self._print_game, train=True)
                 return True
             elif player_type == 'RuleBase':
                 self._player_slots[slot_index - 1] = RuleBasePlayer(index=slot_index, print_game=self._print_game)
