@@ -38,6 +38,38 @@ class RuleBasePlayer(BasePlayer):
 
         return players_win
 
+    def _calc_expected_profit(self, dice_index, game_info, white_dice_value=0.5):
+        num_players = len(game_info['players'])
+        temp_dice_bucket = game_info['casinos'][dice_index]['dice']
+        temp_banknotes_bucket = game_info['casinos'][dice_index]['banknotes']
+        original_payout = self._calculate_temp_pay_out(temp_dice_bucket, temp_banknotes_bucket)
+
+        dice_value = 0
+        for td in self._dice:
+            if td == dice_index:
+                temp_dice_bucket.append(self.index)
+                dice_value += 1
+        for td in self._dice_white:
+            if td == dice_index:
+                temp_dice_bucket.append(0)
+                dice_value += white_dice_value
+        new_payout = self._calculate_temp_pay_out(temp_dice_bucket, temp_banknotes_bucket)
+
+        money_changed = 0
+        player_indices = list(np.unique([list(original_payout.keys()) + list(new_payout.keys())]))
+        for player_index in player_indices:
+            player_money_changed = 0
+            if player_index in original_payout.keys():
+                player_money_changed -= original_payout[player_index]
+            if player_index in new_payout.keys():
+                player_money_changed += new_payout[player_index]
+            if player_index == self.index:
+                money_changed += player_money_changed
+            else:
+                money_changed -= player_money_changed / num_players
+
+        return money_changed, dice_value
+
     def _select_casino_rule_based(self, game_info, white_dice_value=0.5):
         available_options = []
         for d in self._dice:
@@ -50,34 +82,7 @@ class RuleBasePlayer(BasePlayer):
 
         expected_profits = {}
         for dice_index in available_options:
-            num_players = len(game_info['players'])
-            temp_dice_bucket = game_info['casinos'][dice_index]['dice']
-            temp_banknotes_bucket = game_info['casinos'][dice_index]['banknotes']
-            original_payout = self._calculate_temp_pay_out(temp_dice_bucket, temp_banknotes_bucket)
-
-            dice_value = 0
-            for td in self._dice:
-                if td == dice_index:
-                    temp_dice_bucket.append(self.index)
-                    dice_value += 1
-            for td in self._dice_white:
-                if td == dice_index:
-                    temp_dice_bucket.append(0)
-                    dice_value += white_dice_value
-            new_payout = self._calculate_temp_pay_out(temp_dice_bucket, temp_banknotes_bucket)
-
-            money_changed = 0
-            player_indices = list(np.unique([list(original_payout.keys()) + list(new_payout.keys())]))
-            for player_index in player_indices:
-                player_money_changed = 0
-                if player_index in original_payout.keys():
-                    player_money_changed -= original_payout[player_index]
-                if player_index in new_payout.keys():
-                    player_money_changed += new_payout[player_index]
-                if player_index == self.index:
-                    money_changed += player_money_changed
-                else:
-                    money_changed -= player_money_changed / num_players
+            money_changed, dice_value = self._calc_expected_profit(dice_index, game_info, white_dice_value)
             expected_profits[dice_index] = money_changed / dice_value
 
         for dice_index, money_changed in sorted(expected_profits.items(), key=lambda x: x[1], reverse=True):

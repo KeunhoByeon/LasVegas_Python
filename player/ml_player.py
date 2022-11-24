@@ -1,5 +1,20 @@
+# TODO: TEMP
+import torch
+import torch.nn as nn
+
+import torch.nn.functional as F
 from .base_player import BasePlayer
 from .ml.player_model import PlayerModel
+
+
+def get_target_tensor(prediction, target_is_real):
+    target_tensor = torch.argmax(prediction.detach(), dim=2)
+    target_tensor = F.one_hot(target_tensor, num_classes=6)
+    if not target_is_real:
+        target_tensor -= 1
+        target_tensor *= -1
+    target_tensor = target_tensor.type(torch.FloatTensor)
+    return target_tensor
 
 
 class MLPlayer(BasePlayer):
@@ -7,11 +22,21 @@ class MLPlayer(BasePlayer):
         super(MLPlayer, self).__init__(index, print_game=print_game)
         self.training = train
         self.model = PlayerModel(train=train)
+        self.available_train = True
+        self.was_win = True
 
         if not self.training:
             self.model.eval()
 
-    def _make_input_data(self, game_info):
+        # TODO: TEMP
+        if self.training:
+            self.loss_function = nn.BCEWithLogitsLoss()
+            self.memory_preds = []
+            self.memory_availables = []
+            self.memory_win_losses = []
+            self.memory_loose_losses = []
+
+    def _make_input_tensor(self, game_info):
         """
         Input Size
 
@@ -61,13 +86,52 @@ class MLPlayer(BasePlayer):
             input_array.append(player_info['num_dice'])
             input_array.append(player_info['num_dice_white'])
 
-        return [input_array]
+        return torch.FloatTensor([input_array])
 
     def _select_casino_ml_model(self, game_info):
-        input_array = self._make_input_data(game_info)
-        dice_index = self.model(input_array)
-        del input_array
-        return dice_index
+        available_options = []
+        for d in self._dice:
+            if d not in available_options:
+                available_options.append(d)
+        for d in self._dice_white:
+            if d not in available_options:
+                available_options.append(d)
+        available_options.sort()
+        input_tensor = self._make_input_tensor(game_info)
+
+        if not self.training:
+            with torch.no_grad():
+                pred = self.model(input_tensor)
+                dice_index = int(torch.argmax(pred, dim=1)[0].item() + 1)
+                return dice_index if dice_index in available_options else available_options[0]
+
+        while True:
+            pred = self.model(self._make_input_tensor(game_info))
+            dice_index = int(torch.argmax(pred, dim=1)[0].item() + 1)
+
+            pred = torch.FloatTensor(torch.stack([pred]))
+            target = torch.zeros_like(pred)
+            for d_i in available_options:
+                target[0][0][d_i - 1] = 1.
+            target = target.type(torch.FloatTensor)
+
+            if dice_index not in available_options:
+                self.model.optimizer.zero_grad()
+                loss = self.loss_function(pred, target) / len(available_options)
+                loss.backward()
+                self.model.optimizer.step()
+                continue
+
+            if not self.available_train:
+                self.memory_preds.append(pred)
+                self.memory_availables.append(target)
+
+                self.model.optimizer.zero_grad()
+                self.loss = self.loss_function(pred, torch.minimum(target, get_target_tensor(pred, self.was_win)))
+                self.loss.backward()
+                self.model.optimizer.step()
+
+            return dice_index
 
     def _select_casino(self, **kwargs):
         print("[Player{}]  Dice: {}{}".format(self.index, str(self._dice), str(self._dice_white))) if self._print_game else None
