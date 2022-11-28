@@ -22,21 +22,16 @@ class MLPlayer(BasePlayer):
         super(MLPlayer, self).__init__(index, print_game=print_game)
         self.training = train
         self.model = PlayerModel(train=train)
-        self.available_train = True
-        self.was_win = True
-        self.cnt_rand = 0
-        self.cnt_total = 0
 
-        if not self.training:
-            self.model.eval()
-
-        # TODO: TEMP
         if self.training:
             self.loss_function = nn.BCEWithLogitsLoss()
-            self.memory_preds = []
-            self.memory_availables = []
             self.memory_win_losses = []
             self.memory_loose_losses = []
+            self.available_train = True
+            self.cnt_rand = 0
+            self.cnt_total = 0
+        else:
+            self.model.eval()
 
     def _make_input_tensor(self, game_info):
         """
@@ -131,10 +126,10 @@ class MLPlayer(BasePlayer):
             with torch.no_grad():
                 pred = self.model(input_tensor)
                 dice_order = torch.argsort(pred, dim=1, descending=True)[0]
-                for d in dice_order:
-                    d = int(d.item() + 1)
-                    if d in available_options:
-                        return d
+                for dice_index in dice_order:
+                    dice_index = int(dice_index.item() + 1)
+                    if dice_index in available_options:
+                        return dice_index
 
         self.cnt_total += 1
         while True:
@@ -143,25 +138,26 @@ class MLPlayer(BasePlayer):
             dice_index = int(dice_order[0].item() + 1)
             pred = torch.FloatTensor(torch.stack([pred]))
 
+            if not self.available_train:
+                target_available = self._get_target_available(pred, available_options)
+                self._add_to_memory(pred, target_available)
+
             if dice_index in available_options:
-                if not self.available_train:
-                    target_available = self._get_target_available(pred, available_options)
-                    self._add_to_memory(pred, target_available)
                 return dice_index
+
+            self.cnt_rand += 1
+            if self.available_train:
+                target_available = self._get_target_available(pred, available_options)
+                self.model.optimizer.zero_grad()
+                loss = self.loss_function(pred, target_available) / len(available_options)
+                loss.backward()
+                self.model.optimizer.step()
+                continue
             else:
-                self.cnt_rand += 1
-                if self.available_train:
-                    target_available = self._get_target_available(pred, available_options)
-                    self.model.optimizer.zero_grad()
-                    loss = self.loss_function(pred, target_available) / len(available_options)
-                    loss.backward()
-                    self.model.optimizer.step()
-                    continue
-                else:
-                    for dice_index in dice_order:
-                        dice_index = int(dice_index.item() + 1)
-                        if dice_index in available_options:
-                            return dice_index
+                for dice_index in dice_order:
+                    dice_index = int(dice_index.item() + 1)
+                    if dice_index in available_options:
+                        return dice_index
 
     def _select_casino(self, **kwargs):
         print("[Player{}]  Dice: {}{}".format(self.index, str(self._dice), str(self._dice_white))) if self._print_game else None

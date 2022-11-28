@@ -3,31 +3,28 @@ import torch.nn as nn
 
 
 class PlayerModel(nn.Module):
-    def __init__(self, input_num=87, out_num=6, depth_alpha=2, depth_beta=2, train=False, lr=0.001):
+    def __init__(self, input_num=87, out_num=6, train=False, lr=0.01):
         super(PlayerModel, self).__init__()
-        self.training = train
-        self.loss = None
 
-        model = []
-        for da in range(depth_alpha):
-            model.append(nn.Linear(int(input_num * (2 ** da)), int(input_num * (2 ** (da + 1)))))
-            model.append(nn.ReLU())
-            for db in range(depth_beta):
-                model.append(nn.Linear(int(input_num * (2 ** (da + 1))), int(input_num * (2 ** (da + 1)))))
-                model.append(nn.ReLU())
-
-        for da in range(depth_alpha):
-            model.append(nn.Linear(int(input_num * (2 ** (depth_alpha - da))), int(input_num * (2 ** (depth_alpha - da - 1)))))
-            model.append(nn.ReLU())
-            for db in range(depth_beta):
-                model.append(nn.Linear(int(input_num * (2 ** (depth_alpha - da - 1))), int(input_num * (2 ** (depth_alpha - da - 1)))))
-                model.append(nn.ReLU())
-
-        model.append(nn.Linear(input_num, out_num))
+        model = [
+            nn.Linear(input_num, 256),
+            nn.Tanh(),
+            nn.Linear(256, 256),
+            nn.Tanh(),
+            nn.Linear(256, 64),
+            nn.Tanh(),
+            nn.Linear(64, 64),
+            nn.Tanh(),
+            nn.Linear(64, 16),
+            nn.Tanh(),
+            nn.Linear(16, 16),
+            nn.Tanh(),
+            nn.Linear(16, out_num),
+        ]
         self.model = nn.Sequential(*model)
 
         if train:
-            self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=lr, weight_decay=0.001)
+            self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=lr, weight_decay=0.01)
             self.scheduler = None
         else:
             self.model.eval()
