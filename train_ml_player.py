@@ -1,5 +1,6 @@
 import gc
 import multiprocessing as mp
+import os
 import random
 
 import numpy as np
@@ -36,14 +37,13 @@ if __name__ == '__main__':
     for slot_index, player_type in enumerate(PLAYER_SETTING):
         game_manager.add_player(slot_index=slot_index + 1, player_type=player_type)
 
+    ml_player = game_manager.players_manager._player_slots[0]
     for epoch in range(EPOCH):
         losses = []
         total_ranking_sum = [0 for _ in range(len(PLAYER_SETTING) + 1)]
         progress = tqdm(range(GAME_NUM), leave=False)
         for _ in progress:
             gc.collect()
-
-            ml_player = game_manager.players_manager._player_slots[0]
 
             ml_player.cnt_rand, ml_player.cnt_total = 0, 0
             game_manager.players_manager._player_slots[0].available_train = True
@@ -57,15 +57,12 @@ if __name__ == '__main__':
 
             result = True if ranking[0] == ML_PLAYER_INDEX else False
 
-            # winner_money = game_manager.players_manager.get_players_info()[ranking[0]]['money']
-            # my_money = game_manager.players_manager.get_players_info()[ML_PLAYER_INDEX]['money']
-
-            # targets_available = torch.stack(ml_player.memory_availables)
-            # targets_result = get_target_tensor(ml_player.memory_preds, result)
-            # targets = torch.minimum(targets_available, targets_result)
+            winner_money = game_manager.players_manager.get_players_info()[ranking[0]]['money']
+            my_money = game_manager.players_manager.get_players_info()[ML_PLAYER_INDEX]['money']
 
             ml_player.model.optimizer.zero_grad()
             loss = torch.sum(torch.stack(ml_player.memory_win_losses if result else ml_player.memory_loose_losses))
+            loss = loss if result else loss * (1 + my_money / winner_money)
             loss.backward()
             ml_player.model.optimizer.step()
             ml_player.memory_win_losses = []
@@ -75,6 +72,9 @@ if __name__ == '__main__':
                 total_ranking_sum[player_index] += rank
 
             progress.set_description(desc='Loss: {}\t{}  Cnt1: {}  Cnt2: {}'.format(round(loss.item(), 8), str(total_ranking_sum[1:]), cnt_1, cnt_2))
+
+        os.makedirs('./results', exist_ok=True)
+        torch.save(ml_player.model.state_dict(), './results/model.pth')
         print('Epoch {}\tLoss: {}\t{}'.format(epoch, loss, str(total_ranking_sum[1:])))
 
 # Old Training Sequence
