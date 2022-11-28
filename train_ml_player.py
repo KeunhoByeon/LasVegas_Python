@@ -51,21 +51,14 @@ if __name__ == '__main__':
         for _ in progress:
             gc.collect()
 
+            # Main Training
             ml_player.cnt_rand, ml_player.cnt_total = 0, 0
-            game_manager.players_manager._player_slots[0].available_train = True
+            game_manager.players_manager._player_slots[0].available_train = False
             ranking = game_manager.run()
             cnt_1 = round(ml_player.cnt_rand / ml_player.cnt_total, 4)
 
             for rank, player_index in enumerate(ranking):
                 rank_sum_1[player_index] += rank
-
-            ml_player.cnt_rand, ml_player.cnt_total = 0, 0
-            game_manager.players_manager._player_slots[0].available_train = False
-            ranking = game_manager.run()
-            cnt_2 = round(ml_player.cnt_rand / ml_player.cnt_total, 4)
-
-            for rank, player_index in enumerate(ranking):
-                rank_sum_2[player_index] += rank
 
             result = True if ranking[0] == ML_PLAYER_INDEX else False
 
@@ -83,6 +76,15 @@ if __name__ == '__main__':
             ml_player.model.optimizer.step()
             ml_player.memory_win_losses = []
             ml_player.memory_loose_losses = []
+
+            # Available Training
+            ml_player.cnt_rand, ml_player.cnt_total = 0, 0
+            game_manager.players_manager._player_slots[0].available_train = True
+            ranking = game_manager.run()
+            cnt_2 = round(ml_player.cnt_rand / ml_player.cnt_total, 4)
+
+            for rank, player_index in enumerate(ranking):
+                rank_sum_2[player_index] += rank
 
             losses.append(loss.item())
             cnts_1.append(cnt_1)
