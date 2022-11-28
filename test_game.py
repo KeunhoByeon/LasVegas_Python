@@ -11,7 +11,7 @@ from game_manager import GameManager
 GAME_NUM = 1000
 RANDOM_SEED = 103
 NUM_PROCESS = mp.cpu_count()
-PLAYER_SETTING = ["RuleBase", "RuleBase", "Random", "Random", "Random"]
+PLAYER_SETTING = ["RuleBase", "Random", "RuleBase", "Random"]
 
 """
 PLAYER_SETTING = ["RuleBase", "Random", "Random"]
