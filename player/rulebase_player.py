@@ -1,11 +1,69 @@
 import numpy as np
-
 from .base_player import BasePlayer
 
 
 class RuleBasePlayer(BasePlayer):
     def __init__(self, index, print_game: bool = True):
         super(RuleBasePlayer, self).__init__(index, print_game=print_game)
+
+    def _make_input_tensor(self, game_info):
+        """
+        Input Size
+
+        Game 1 * NumPlayer 1 Round 1 = 2
+        Player 1 * Money 1 Dice 6 WhiteDice 6 = 13
+        Casinos 6 * Banknotes 5 Dice 5 = 60
+        OtherPlayers 4 * Money 1 DiceNum 1 WhiteDiceNum 1 = 12
+        SUM = 87
+        """
+        players_info = game_info['players']
+        casinos_info = game_info['casinos']
+        round_index = game_info['round_index']
+        num_players = len(players_info)
+
+        input_array = []
+        input_array.append(num_players / 5)
+        input_array.append(round_index / 4)
+
+        input_array.append(self._money / 10000 / 100)
+        p_num_dice = [0 for _ in range(6)]
+        p_num_white_dice = [0 for _ in range(6)]
+        for d in self._dice:
+            p_num_dice[d - 1] += 1
+        for d in self._dice_white:
+            p_num_white_dice[d - 1] += 1
+        for i in range(6):
+            p_num_dice[i] /= 8
+            p_num_white_dice[i] /= 4
+        input_array.extend(p_num_dice)
+        input_array.extend(p_num_white_dice)
+
+        for casino_index, casino_info in casinos_info.items():
+            c_banknotes = []
+            for banknote in casino_info['banknotes']:
+                c_banknotes.append(banknote / 10000 / 10)
+            for _ in range(5 - len(c_banknotes)):
+                c_banknotes.append(0)
+
+            c_dice = [0 for _ in range(5)]
+            for die_index in casino_info['dice']:
+                c_dice[die_index - 1] += 1
+            for i in range(len(c_dice)):
+                c_dice[i] /= 60
+
+            input_array.extend(c_banknotes)
+            input_array.extend(c_dice)
+
+        for player_index in range(2, 6):
+            if player_index in players_info.keys():
+                player_info = players_info[player_index]
+                input_array.append(player_info['money'] / 10000 / 100)
+                input_array.append(player_info['num_dice'] / 8)
+                input_array.append(player_info['num_dice_white'] / 4)
+            else:
+                input_array.extend([0, 0, 0])
+
+        return input_array
 
     def _calculate_temp_dice_order(self, temp_dice_bucket) -> list:
         temp_dice_unique, temp_dice_counts = np.unique(temp_dice_bucket, return_counts=True)
@@ -86,6 +144,8 @@ class RuleBasePlayer(BasePlayer):
             expected_profits[dice_index] = money_changed / dice_value
 
         for dice_index, money_changed in sorted(expected_profits.items(), key=lambda x: x[1], reverse=True):
+            with open('./data.csv', 'a') as wf:
+                wf.write(','.join(np.array(self._make_input_tensor(game_info)).astype(str)) + ',' + str(dice_index) + '\n')
             return dice_index
 
     def _select_casino(self, **kwargs):

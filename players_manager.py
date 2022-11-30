@@ -69,7 +69,7 @@ class PlayersManager:
                 print("Player type {} not yet implemented".format(player_type))
                 return False
         else:
-            print("Slot {} is not empty".format(slot_index))
+            print("Slot {} is not empty".format(slot_index)) if self._print_game else None
             return False
 
     def del_player(self, slot_index: int):
