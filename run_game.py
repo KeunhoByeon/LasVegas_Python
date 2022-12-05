@@ -6,7 +6,7 @@ from game_manager import GameManager
 
 GAME_NUM = 100
 RANDOM_SEED = 103
-PLAYER_SETTING = ["Human", "RuleBase", "Random", "Random"]
+PLAYER_SETTING = ["RuleBase", "RuleBase", "Random", "RuleBase"]
 
 if __name__ == '__main__':
     if RANDOM_SEED is not None:

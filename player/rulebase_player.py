@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from .base_player import BasePlayer
 
@@ -11,10 +12,10 @@ class RuleBasePlayer(BasePlayer):
         Input Size
 
         Game 1 * NumPlayer 1 Round 1 = 2
-        Player 1 * Money 1 Dice 6 WhiteDice 6 = 13
+        Player 1 * Index 5 Money 1 Dice 6 WhiteDice 6 = 18
         Casinos 6 * Banknotes 5 Dice 5 = 60
-        OtherPlayers 4 * Money 1 DiceNum 1 WhiteDiceNum 1 = 12
-        SUM = 87
+        AllPlayers 5 * Money 1 DiceNum 1 WhiteDiceNum 1 = 15
+        SUM = 95
         """
         players_info = game_info['players']
         casinos_info = game_info['casinos']
@@ -25,6 +26,9 @@ class RuleBasePlayer(BasePlayer):
         input_array.append(num_players / 5)
         input_array.append(round_index / 4)
 
+        index_arr = [0 for _ in range(5)]
+        index_arr[self.index - 1] = 1
+        input_array.extend(index_arr)
         input_array.append(self._money / 10000 / 100)
         p_num_dice = [0 for _ in range(6)]
         p_num_white_dice = [0 for _ in range(6)]
@@ -49,12 +53,12 @@ class RuleBasePlayer(BasePlayer):
             for die_index in casino_info['dice']:
                 c_dice[die_index - 1] += 1
             for i in range(len(c_dice)):
-                c_dice[i] /= 60
+                c_dice[i] /= 8
 
             input_array.extend(c_banknotes)
             input_array.extend(c_dice)
 
-        for player_index in range(2, 6):
+        for player_index in range(1, 6):
             if player_index in players_info.keys():
                 player_info = players_info[player_index]
                 input_array.append(player_info['money'] / 10000 / 100)
@@ -144,7 +148,7 @@ class RuleBasePlayer(BasePlayer):
             expected_profits[dice_index] = money_changed / dice_value
 
         for dice_index, money_changed in sorted(expected_profits.items(), key=lambda x: x[1], reverse=True):
-            with open('./data.csv', 'a') as wf:
+            with open('./data/data_{}.csv'.format(time.strftime('%Y%m%d%H%M', time.localtime(time.time()))), 'a') as wf:
                 wf.write(','.join(np.array(self._make_input_tensor(game_info)).astype(str)) + ',' + str(dice_index) + '\n')
             return dice_index
 

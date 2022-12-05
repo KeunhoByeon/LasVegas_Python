@@ -19,7 +19,7 @@ def get_target_tensor(prediction, target_is_real):
 
 
 class MLPlayer(BasePlayer):
-    def __init__(self, index, print_game: bool = True, train: bool = False, lr=0.0001):
+    def __init__(self, index: int, print_game: bool = True, train: bool = False, lr=0.0001):
         super(MLPlayer, self).__init__(index, print_game=print_game)
         self.training = train
         self.model = PlayerModel()
@@ -27,7 +27,6 @@ class MLPlayer(BasePlayer):
             self.model = self.model.cuda()
 
         if self.training:
-            # self.loss_function = nn.BCELoss()
             # TODO: TEMP Training Code
             self.loss_function = nn.CrossEntropyLoss()
             self.losses = []
@@ -48,10 +47,10 @@ class MLPlayer(BasePlayer):
         Input Size
 
         Game 1 * NumPlayer 1 Round 1 = 2
-        Player 1 * Money 1 Dice 6 WhiteDice 6 = 13
+        Player 1 * Index 5 Money 1 Dice 6 WhiteDice 6 = 18
         Casinos 6 * Banknotes 5 Dice 5 = 60
-        OtherPlayers 4 * Money 1 DiceNum 1 WhiteDiceNum 1 = 12
-        SUM = 87
+        AllPlayers 5 * Money 1 DiceNum 1 WhiteDiceNum 1 = 15
+        SUM = 95
         """
         players_info = game_info['players']
         casinos_info = game_info['casinos']
@@ -62,6 +61,9 @@ class MLPlayer(BasePlayer):
         input_array.append(num_players / 5)
         input_array.append(round_index / 4)
 
+        index_arr = [0 for _ in range(5)]
+        index_arr[self.index - 1] = 1
+        input_array.extend(index_arr)
         input_array.append(self._money / 10000 / 100)
         p_num_dice = [0 for _ in range(6)]
         p_num_white_dice = [0 for _ in range(6)]
@@ -86,12 +88,12 @@ class MLPlayer(BasePlayer):
             for die_index in casino_info['dice']:
                 c_dice[die_index - 1] += 1
             for i in range(len(c_dice)):
-                c_dice[i] /= 60
+                c_dice[i] /= 8
 
             input_array.extend(c_banknotes)
             input_array.extend(c_dice)
 
-        for player_index in range(2, 6):
+        for player_index in range(1, 6):
             if player_index in players_info.keys():
                 player_info = players_info[player_index]
                 input_array.append(player_info['money'] / 10000 / 100)
@@ -147,6 +149,8 @@ class MLPlayer(BasePlayer):
 
         if not self.training:
             with torch.no_grad():
+                if torch.cuda.is_available():
+                    input_tensor = input_tensor.cuda()
                 pred = self.model(input_tensor)
                 dice_order = torch.argsort(pred, dim=1, descending=True)[0]
                 for dice_index in dice_order:

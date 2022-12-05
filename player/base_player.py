@@ -3,7 +3,7 @@ from abc import *
 
 
 class BasePlayer(metaclass=ABCMeta):
-    def __init__(self, index, num_white_dice=0, print_game: bool = True):
+    def __init__(self, index: int, num_white_dice: int = 0, print_game: bool = True):
         self.index = index
         self._dice = []
         self._dice_white = []

@@ -30,7 +30,7 @@ def get_target_tensor(prediction, target_is_real):
 
 
 if __name__ == '__main__':
-    result_dir = os.path.join('./results', time.strftime('%Y%m%d%H%M%S', time.localtime(time.time())))
+    result_dir = os.path.join('./results', time.strftime('%Y%m%d%H%M%S_playing', time.localtime(time.time())))
 
     if RANDOM_SEED is not None:
         random.seed(RANDOM_SEED)
@@ -68,34 +68,33 @@ if __name__ == '__main__':
             losses.append(np.mean(ml_player.losses))
             ml_player.losses = []
 
-            # # Main Training
-            # ml_player.cnt_rand, ml_player.cnt_total = 0, 0
-            # game_manager.players_manager._player_slots[0].available_train = False
-            # ranking = game_manager.run()
-            # cnt_2 = round(ml_player.cnt_rand / ml_player.cnt_total, 4)
-            #
-            # for rank, player_index in enumerate(ranking):
-            #     rank_sum_2[player_index] += rank
-            #
-            # result = True if ranking[0] == ML_PLAYER_INDEX else False
-            #
-            # winner_money = game_manager.players_manager.get_players_info()[ranking[0]]['money']
-            # my_money = game_manager.players_manager.get_players_info()[ML_PLAYER_INDEX]['money']
-            # total_money = 0
-            # for p_index, p_info in game_manager.players_manager.get_players_info().items():
-            #     total_money += p_info['money']
-            #
-            # if (result and len(ml_player.memory_win_losses) > 0) or (not result and len(ml_player.memory_loose_losses) > 0):
-            #     ml_player.optimizer.zero_grad()
-            #     loss = torch.mean(torch.stack(ml_player.memory_win_losses if result else ml_player.memory_loose_losses))
-            #     loss = loss if result else loss * (1 - my_money / winner_money)
-            #     loss = loss if not result else loss * (1 + my_money / total_money)
-            #     loss.backward()
-            #     losses.append(loss.item())
-            #     ml_player.optimizer.step()
-            # ml_player.memory_win_losses = []
-            # ml_player.memory_loose_losses = []
-            cnt_2 = 0
+            # Main Training
+            ml_player.cnt_rand, ml_player.cnt_total = 0, 0
+            game_manager.players_manager._player_slots[0].available_train = False
+            ranking = game_manager.run()
+            cnt_2 = round(ml_player.cnt_rand / ml_player.cnt_total, 4)
+
+            for rank, player_index in enumerate(ranking):
+                rank_sum_2[player_index] += rank
+
+            result = True if ranking[0] == ML_PLAYER_INDEX else False
+
+            winner_money = game_manager.players_manager.get_players_info()[ranking[0]]['money']
+            my_money = game_manager.players_manager.get_players_info()[ML_PLAYER_INDEX]['money']
+            total_money = 0
+            for p_index, p_info in game_manager.players_manager.get_players_info().items():
+                total_money += p_info['money']
+
+            if (result and len(ml_player.memory_win_losses) > 0) or (not result and len(ml_player.memory_loose_losses) > 0):
+                ml_player.optimizer.zero_grad()
+                loss = torch.mean(torch.stack(ml_player.memory_win_losses if result else ml_player.memory_loose_losses))
+                loss = loss if result else loss * (1 - my_money / winner_money)
+                loss = loss if not result else loss * (1 + my_money / total_money)
+                loss.backward()
+                losses.append(loss.item())
+                ml_player.optimizer.step()
+            ml_player.memory_win_losses = []
+            ml_player.memory_loose_losses = []
 
             cnts_1.append(cnt_1)
             cnts_2.append(cnt_2)
