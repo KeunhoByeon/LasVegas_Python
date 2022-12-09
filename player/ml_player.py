@@ -1,4 +1,3 @@
-# TODO: TEMP
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -102,7 +101,7 @@ class MLPlayer(BasePlayer):
             else:
                 input_array.extend([0, 0, 0])
 
-        return torch.FloatTensor([input_array])
+        return torch.tensor([[input_array]], requires_grad=True)
 
     def _get_available_options(self):
         available_options = []
@@ -135,13 +134,13 @@ class MLPlayer(BasePlayer):
     def _add_to_memory(self, pred, target_available, target_rule_base):
         target_better_option_win = torch.minimum(target_available, get_target_tensor(pred, True))
         if target_better_option_win.sum() > 0:
-            if torch.cuda.is_available():
-                self.target_better_option_win = self.target_better_option_win.cuda()
-            self.memory_win_losses.append(self.loss_function(pred, target_better_option_win))
+            # if torch.cuda.is_available():
+            #     self.target_better_option_win = target_better_option_win.cuda()
+            self.memory_win_losses.append(self.loss_function(pred, target_better_option_win[:, 0]))
 
-        if torch.cuda.is_available():
-            self.target_rule_base = self.target_rule_base.cuda()
-        self.memory_loose_losses.append(self.loss_function(pred, target_rule_base))
+        # if torch.cuda.is_available():
+        #     self.target_rule_base = self.target_rule_base.cuda()
+        self.memory_loose_losses.append(self.loss_function(pred, target_rule_base[:, 0]))
 
     def _select_casino_ml_model(self, game_info):
         available_options = self._get_available_options()
@@ -152,7 +151,7 @@ class MLPlayer(BasePlayer):
                 if torch.cuda.is_available():
                     input_tensor = input_tensor.cuda()
                 pred = self.model(input_tensor)
-                dice_order = torch.argsort(pred, dim=1, descending=True)[0]
+                dice_order = torch.argsort(pred, dim=2, descending=True)[0][0]
                 for dice_index in dice_order:
                     dice_index = int(dice_index.item() + 1)
                     if dice_index in available_options:
@@ -160,29 +159,32 @@ class MLPlayer(BasePlayer):
 
         self.cnt_total += 1
         while True:
-            pred = self.model(self._make_input_tensor(game_info))
-            dice_order = torch.argsort(pred, dim=1, descending=True)[0]
+            input_tensor = self._make_input_tensor(game_info)
+            if torch.cuda.is_available():
+                input_tensor = input_tensor.cuda()
+            pred = self.model(input_tensor)
+            dice_order = torch.argsort(pred, dim=2, descending=True)[0][0]
             dice_index = int(dice_order[0].item() + 1)
-            pred = torch.FloatTensor(torch.stack([pred]))
+            # pred = torch.FloatTensor(torch.stack(pred))
 
-            # TODO: TEMP Training Code
-            self.rule_base._dice = self._dice
-            self.rule_base._dice_white = self._dice_white
-            target_index = self.rule_base._select_casino_rule_based(game_info)
-            if dice_index != target_index:
-                target_rule_base = self._get_target_rule_base(pred, game_info)
-                if torch.cuda.is_available():
-                    target_rule_base = target_rule_base.cuda()
-                self.optimizer_available.zero_grad()
-                loss = self.loss_function(pred[0], target_rule_base[0])
-                loss.backward()
-                self.optimizer_available.step()
-                self.cnt_rand += 1
-                self.losses.append(loss.item())
-                continue
-            else:
-                return dice_index
-            # TODO: Done
+            # # TODO: TEMP Training Code
+            # self.rule_base._dice = self._dice
+            # self.rule_base._dice_white = self._dice_white
+            # target_index = self.rule_base._select_casino_rule_based(game_info)
+            # if dice_index != target_index:
+            #     target_rule_base = self._get_target_rule_base(pred, game_info)
+            #     if torch.cuda.is_available():
+            #         target_rule_base = target_rule_base.cuda()
+            #     self.optimizer_available.zero_grad()
+            #     loss = self.loss_function(pred[0], target_rule_base[0])
+            #     loss.backward()
+            #     self.optimizer_available.step()
+            #     self.cnt_rand += 1
+            #     self.losses.append(loss.item())
+            #     continue
+            # else:
+            #     return dice_index
+            # # TODO: Done
 
             target_available = self._get_target_available(pred, available_options)
             target_rule_base = self._get_target_rule_base(pred, game_info)

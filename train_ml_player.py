@@ -43,8 +43,10 @@ if __name__ == '__main__':
         game_manager.add_player(slot_index=slot_index + 1, player_type=player_type)
 
     ml_player = game_manager.players_manager._player_slots[0]
+    ml_player.model.load_state_dict(torch.load('./results/20221206235003/model_best.pth').state_dict())
+    ml_player.model = ml_player.model.cuda()
     scheduler = torch.optim.lr_scheduler.CyclicLR(ml_player.optimizer, base_lr=1e-8, max_lr=0.01, step_size_up=1, step_size_down=5, mode='triangular', cycle_momentum=False)
-    scheduler_available = torch.optim.lr_scheduler.CyclicLR(ml_player.optimizer_available, base_lr=1e-5, max_lr=0.01, step_size_up=1, step_size_down=5, mode='triangular', cycle_momentum=False)
+    scheduler_available = torch.optim.lr_scheduler.CyclicLR(ml_player.optimizer_available, base_lr=1e-5, max_lr=0.001, step_size_up=1, step_size_down=5, mode='triangular', cycle_momentum=False)
     scheduler.step()
     scheduler_available.step()
 
