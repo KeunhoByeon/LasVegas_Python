@@ -1,5 +1,6 @@
 # LasVegas_Python
 
+Gamesoftware Team 9 - Bot Player ML Model
 
 ### Getting Started
 [![python version](https://img.shields.io/badge/python-3.6-black)](https://www.python.org/)
