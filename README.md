@@ -23,3 +23,7 @@ python3 test_game.py
 ```sh
 python3 torch_to_onnx.py
 ```
+
+### 3. Load ONNX model on Unity
+Check out Unity Barracuda
+https://docs.unity3d.com/Packages/com.unity.barracuda@1.0/manual/index.html
